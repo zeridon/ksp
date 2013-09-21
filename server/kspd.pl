@@ -7,6 +7,8 @@
 # this stuff is worth it, you can buy me a beer in return.      - Philip Paeps
 # ----------------------------------------------------------------------------
 
+# <vvitkov@linux-bg.org> Logic improvements and performance enhancements
+
 #
 # Hackish implementation of draft-shaw-openpgp-hkp-00.txt.
 # Loosely based on a similar hack by Alexander Wirt (formorer).
@@ -130,7 +132,10 @@ while (my $c = $d->accept) {
 	my $peer = $c->peerhost();
 
 	while (my $r = $c->get_request) {
-		if ($r->method eq "POST" and $r->url->path eq "/pks/add") {
+		# Don't accept keys after the submission deadline.
+		if (-e "$basedir/kspd.lock") {
+			send_response($c, 403, "Submissions closed");
+		} elsif ($r->method eq "POST" and $r->url->path eq "/pks/add") {
 			add_key($c, $r);
 		} else {
 			send_response($c, 501, "Not implemented");
